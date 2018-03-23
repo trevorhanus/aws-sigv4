@@ -18,8 +18,6 @@ export interface ISignRequestConfig {
     secretKey: string;
     sessionToken?: string;
     serviceName?: string; // default 'execute-api'
-    defaultAcceptType?: string; // default 'application/json'
-    defaultContentType?: string; // default 'application/json'
 }
 
 const AWS_SHA_256           = 'AWS4-HMAC-SHA256';
@@ -30,10 +28,6 @@ const X_AMZ_SECURITY_TOKEN  = 'x-amz-security-token';
 const AUTHORIZATION         = 'Authorization';
 const HOST                  = 'Host';
 
-export function sign(config: ISignRequestConfig): Headers {
-    return getSigningParts(config).headers;
-}
-
 export interface ISigningParts {
     config: ISignRequestConfig,
     headers: Headers,
@@ -43,16 +37,12 @@ export interface ISigningParts {
     stringToSign: string;
 }
 
-export function getSigningParts(config: ISignRequestConfig): ISigningParts {
+export function buildSigningParts(config: ISignRequestConfig): ISigningParts {
 
     assertProps(config, ['method', 'path', 'region', 'endpoint', 'accessKey', 'secretKey']);
     assertValue(config, 'headers', {});
     assertValue(config, 'params', {});
     assertValue(config, 'serviceName', 'execute-api');
-    assertValue(config, 'defaultAcceptType', 'application/json');
-    assertValue(config, 'defaultContentType', 'application/json');
-
-    config.method = config.method.toUpperCase();
 
     let datetime = null;
     const passedDateHeader = Object.keys(config.headers).find(val => val.toLowerCase() === X_AMZ_DATE);
@@ -75,8 +65,8 @@ export function getSigningParts(config: ISignRequestConfig): ISigningParts {
     const canonicalRequest = buildCanonicalRequest(config.method, config.path, config.headers, config.params, config.data);
     const credentialScope = buildCredentialScope(datetime, config.region, config.serviceName);
     const stringToSign = buildStringToSign(datetime, credentialScope, canonicalRequest);
-    const signingKey = calculateSigningKey(config.secretKey, datetime, config.region, config.serviceName);
-    const signature = calculateSignature(signingKey, stringToSign);
+    const signingKey = buildSigningKey(config.secretKey, datetime, config.region, config.serviceName);
+    const signature = buildSignature(signingKey, stringToSign);
     const authHeader = buildAuthorizationHeader(config.accessKey, credentialScope, config.headers, signature);
     config.headers[AUTHORIZATION] = authHeader;
 
@@ -93,8 +83,8 @@ export function getSigningParts(config: ISignRequestConfig): ISigningParts {
 // Canonical Request
 // ------------------------------------
 
-export function buildCanonicalRequest(method: string, path: string, headers: Headers, queryParams?: QueryParams, payload?: string): string {
-    return  method + '\n' +
+export function buildCanonicalRequest(method: string, path: string, headers: Headers, queryParams: QueryParams = {}, payload: string = ''): string {
+    return  method.toUpperCase() + '\n' +
         buildCanonicalUri(path) + '\n' +
         buildCanonicalQueryString(queryParams) + '\n' +
         buildCanonicalHeaders(headers) + '\n' +
@@ -179,7 +169,7 @@ function hashCanonicalRequest(request: string): string {
 // Signing Key
 // ------------------------------------
 
-function calculateSigningKey(secretKey: string, datetime: string, region: string, service: string): WordArray {
+export function buildSigningKey(secretKey: string, datetime: string, region: string, service: string): WordArray {
     const kDate = hmac(AWS4 + secretKey, datetime.substr(0, 8));
     const kRegion = hmac(kDate, region);
     const kService = hmac(kRegion, service);
@@ -189,11 +179,11 @@ function calculateSigningKey(secretKey: string, datetime: string, region: string
 // Signature
 // ------------------------------------
 
-function calculateSignature(key: WordArray, stringToSign: string): string {
+export function buildSignature(key: WordArray, stringToSign: string): string {
     return hexEncode(hmac(key, stringToSign));
 }
 
-function buildAuthorizationHeader(accessKey: string, credentialScope: string, headers: Headers, signature: string): string {
+export function buildAuthorizationHeader(accessKey: string, credentialScope: string, headers: Headers, signature: string): string {
     return AWS_SHA_256 + ' Credential=' + accessKey + '/' + credentialScope + ', SignedHeaders=' +
         buildCanonicalSignedHeaders(headers) + ', Signature=' + signature;
 }

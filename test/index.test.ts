@@ -1,6 +1,6 @@
 import * as fs from 'fs';
 import * as path from 'path';
-import { ISignRequestConfig, getSigningParts, QueryParams } from '../src';
+import { ISignRequestConfig, buildSigningParts, QueryParams } from '../src/sigv4';
 import { expect } from 'chai';
 import { parse as parseUrl } from 'url';
 
@@ -28,7 +28,7 @@ describe('AWS Test Cases', () => {
         for (let i = 0; i < dirs.length; i++) {
             const dir = dirs[i];
             const test = await loadTestData(path.join(__dirname, 'aws-test-cases', dir));
-            const parts = getSigningParts(test.config);
+            const parts = buildSigningParts(test.config);
             expect(parts.authHeader, `${test.name} failed`).to.eq(test.authHeader);
         }
     });
