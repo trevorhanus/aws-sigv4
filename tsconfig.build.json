@@ -1,0 +1,29 @@
+{
+    "compilerOptions": {
+        "module": "commonjs",
+        "target": "es5",
+        "noImplicitAny": true,
+        "experimentalDecorators": true,
+        "preserveConstEnums": true,
+        "declaration": true,
+        "sourceMap": true,
+        "pretty": true,
+        "outDir": "dist/",
+        "jsx": "react",
+        "lib": [
+            "dom",
+            "es2015",
+            "es2015.collection",
+            "es2015.promise"
+        ],
+        "typeRoots": [
+            "./node_modules/@types"
+        ]
+    },
+    "include": [
+        "src/index.ts"
+    ],
+    "exclude": [
+        "node_modules"
+    ]
+}
