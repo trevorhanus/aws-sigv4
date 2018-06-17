@@ -53,6 +53,8 @@ export function buildSigningParts(config: ISignRequestConfig): ISigningParts {
         config.headers[X_AMZ_DATE] = datetime;
     }
 
+    const path = getPath(config.endpoint, config.path);
+
     config.headers[HOST] = hostname(config.endpoint);
 
     if (config.sessionToken != null) {
@@ -62,7 +64,7 @@ export function buildSigningParts(config: ISignRequestConfig): ISigningParts {
     config.data = config.data != null ? JSON.stringify(config.data) : '';
 
     /* Perform SigV4 steps */
-    const canonicalRequest = buildCanonicalRequest(config.method, config.path, config.headers, config.params, config.data);
+    const canonicalRequest = buildCanonicalRequest(config.method, path, config.headers, config.params, config.data);
     const credentialScope = buildCredentialScope(datetime, config.region, config.serviceName);
     const stringToSign = buildStringToSign(datetime, credentialScope, canonicalRequest);
     const signingKey = buildSigningKey(config.secretKey, datetime, config.region, config.serviceName);
@@ -191,4 +193,9 @@ export function buildAuthorizationHeader(accessKey: string, credentialScope: str
 function hostname(endpoint: string): string {
     const site = url.parse(endpoint);
     return site.hostname;
+}
+
+function getPath(endpoint: string, path: string): string {
+    const u = url.parse(endpoint + path);
+    return u.pathname;
 }

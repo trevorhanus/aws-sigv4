@@ -1,6 +1,6 @@
 {
   "name": "@trevorhanus/aws-sigv4",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "author": "Trevor Hanus <trevorhanus@gmail.com>",
